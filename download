@@ -1,0 +1,6 @@
+# Never commit real training exports - they contain advocate names and emails.
+*.xlsx
+*.xls
+Advocate Report Export*
+# Allow the fictional sample file
+!sample-data.csv

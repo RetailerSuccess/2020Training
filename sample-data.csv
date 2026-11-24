@@ -1,0 +1,43 @@
+SFID,Door Name,Dealer Name,Dealer Id,Advocate Name,Email Address,Required/Recommended,Training,Status
+SAMPLE001,20/20 Mobile 100 Sample Ave,20/20 Mobile Corp,1000000,"Alex, Rivera",alex.rivera@example.com,Required,CPNI & COPPA,Complete
+SAMPLE001,20/20 Mobile 100 Sample Ave,20/20 Mobile Corp,1000000,"Alex, Rivera",alex.rivera@example.com,Required,DNC,Incomplete
+SAMPLE001,20/20 Mobile 100 Sample Ave,20/20 Mobile Corp,1000000,"Alex, Rivera",alex.rivera@example.com,Required,Foundations,Complete
+SAMPLE001,20/20 Mobile 100 Sample Ave,20/20 Mobile Corp,1000000,"Alex, Rivera",alex.rivera@example.com,Required,GREAT,Incomplete
+SAMPLE001,20/20 Mobile 100 Sample Ave,20/20 Mobile Corp,1000000,"Alex, Rivera",alex.rivera@example.com,Required,What's Your Plan?,Incomplete
+SAMPLE001,20/20 Mobile 100 Sample Ave,20/20 Mobile Corp,1000000,"Alex, Rivera",alex.rivera@example.com,Required,Welcome to Starlink,Complete
+SAMPLE001,20/20 Mobile 100 Sample Ave,20/20 Mobile Corp,1000000,"Jordan, Lee",jordan.lee@example.com,Required,CPNI & COPPA,Complete
+SAMPLE001,20/20 Mobile 100 Sample Ave,20/20 Mobile Corp,1000000,"Jordan, Lee",jordan.lee@example.com,Required,DNC,Complete
+SAMPLE001,20/20 Mobile 100 Sample Ave,20/20 Mobile Corp,1000000,"Jordan, Lee",jordan.lee@example.com,Required,Foundations,Complete
+SAMPLE001,20/20 Mobile 100 Sample Ave,20/20 Mobile Corp,1000000,"Jordan, Lee",jordan.lee@example.com,Required,GREAT,Complete
+SAMPLE001,20/20 Mobile 100 Sample Ave,20/20 Mobile Corp,1000000,"Jordan, Lee",jordan.lee@example.com,Required,What's Your Plan?,Complete
+SAMPLE001,20/20 Mobile 100 Sample Ave,20/20 Mobile Corp,1000000,"Jordan, Lee",jordan.lee@example.com,Required,Welcome to Starlink,Complete
+SAMPLE002,20/20 Mobile Inc 250 Example Blvd,20/20 Mobile Corp,1000000,"Sam, Patel",sam.patel@example.com,Required,CPNI & COPPA,Incomplete
+SAMPLE002,20/20 Mobile Inc 250 Example Blvd,20/20 Mobile Corp,1000000,"Sam, Patel",sam.patel@example.com,Required,DNC,Incomplete
+SAMPLE002,20/20 Mobile Inc 250 Example Blvd,20/20 Mobile Corp,1000000,"Sam, Patel",sam.patel@example.com,Required,Foundations,Complete
+SAMPLE002,20/20 Mobile Inc 250 Example Blvd,20/20 Mobile Corp,1000000,"Sam, Patel",sam.patel@example.com,Required,GREAT,Complete
+SAMPLE002,20/20 Mobile Inc 250 Example Blvd,20/20 Mobile Corp,1000000,"Sam, Patel",sam.patel@example.com,Required,What's Your Plan?,Complete
+SAMPLE002,20/20 Mobile Inc 250 Example Blvd,20/20 Mobile Corp,1000000,"Sam, Patel",sam.patel@example.com,Required,Welcome to Starlink,Complete
+SAMPLE002,20/20 Mobile Inc 250 Example Blvd,20/20 Mobile Corp,1000000,"Taylor, Kim",taylor.kim@example.com,Required,CPNI & COPPA,Complete
+SAMPLE002,20/20 Mobile Inc 250 Example Blvd,20/20 Mobile Corp,1000000,"Taylor, Kim",taylor.kim@example.com,Required,DNC,Incomplete
+SAMPLE002,20/20 Mobile Inc 250 Example Blvd,20/20 Mobile Corp,1000000,"Taylor, Kim",taylor.kim@example.com,Required,Foundations,Complete
+SAMPLE002,20/20 Mobile Inc 250 Example Blvd,20/20 Mobile Corp,1000000,"Taylor, Kim",taylor.kim@example.com,Required,GREAT,Complete
+SAMPLE002,20/20 Mobile Inc 250 Example Blvd,20/20 Mobile Corp,1000000,"Taylor, Kim",taylor.kim@example.com,Required,What's Your Plan?,Complete
+SAMPLE002,20/20 Mobile Inc 250 Example Blvd,20/20 Mobile Corp,1000000,"Taylor, Kim",taylor.kim@example.com,Required,Welcome to Starlink,Complete
+SAMPLE002,20/20 Mobile Inc 250 Example Blvd,20/20 Mobile Corp,1000000,"Casey, Morgan",casey.morgan@example.com,Required,CPNI & COPPA,Complete
+SAMPLE002,20/20 Mobile Inc 250 Example Blvd,20/20 Mobile Corp,1000000,"Casey, Morgan",casey.morgan@example.com,Required,DNC,Incomplete
+SAMPLE002,20/20 Mobile Inc 250 Example Blvd,20/20 Mobile Corp,1000000,"Casey, Morgan",casey.morgan@example.com,Required,Foundations,Complete
+SAMPLE002,20/20 Mobile Inc 250 Example Blvd,20/20 Mobile Corp,1000000,"Casey, Morgan",casey.morgan@example.com,Required,GREAT,Complete
+SAMPLE002,20/20 Mobile Inc 250 Example Blvd,20/20 Mobile Corp,1000000,"Casey, Morgan",casey.morgan@example.com,Required,What's Your Plan?,Complete
+SAMPLE002,20/20 Mobile Inc 250 Example Blvd,20/20 Mobile Corp,1000000,"Casey, Morgan",casey.morgan@example.com,Required,Welcome to Starlink,Incomplete
+SAMPLE003,20/20 Mobile 742 Demo St,20/20 Mobile Corp,1000000,"Riley, Chen",riley.chen@example.com,Required,CPNI & COPPA,Complete
+SAMPLE003,20/20 Mobile 742 Demo St,20/20 Mobile Corp,1000000,"Riley, Chen",riley.chen@example.com,Required,DNC,Incomplete
+SAMPLE003,20/20 Mobile 742 Demo St,20/20 Mobile Corp,1000000,"Riley, Chen",riley.chen@example.com,Required,Foundations,Complete
+SAMPLE003,20/20 Mobile 742 Demo St,20/20 Mobile Corp,1000000,"Riley, Chen",riley.chen@example.com,Required,GREAT,Complete
+SAMPLE003,20/20 Mobile 742 Demo St,20/20 Mobile Corp,1000000,"Riley, Chen",riley.chen@example.com,Required,What's Your Plan?,Complete
+SAMPLE003,20/20 Mobile 742 Demo St,20/20 Mobile Corp,1000000,"Riley, Chen",riley.chen@example.com,Required,Welcome to Starlink,Complete
+SAMPLE003,20/20 Mobile 742 Demo St,20/20 Mobile Corp,1000000,"Jamie, Brooks",jamie.brooks@example.com,Required,CPNI & COPPA,Complete
+SAMPLE003,20/20 Mobile 742 Demo St,20/20 Mobile Corp,1000000,"Jamie, Brooks",jamie.brooks@example.com,Required,DNC,Complete
+SAMPLE003,20/20 Mobile 742 Demo St,20/20 Mobile Corp,1000000,"Jamie, Brooks",jamie.brooks@example.com,Required,Foundations,Complete
+SAMPLE003,20/20 Mobile 742 Demo St,20/20 Mobile Corp,1000000,"Jamie, Brooks",jamie.brooks@example.com,Required,GREAT,Complete
+SAMPLE003,20/20 Mobile 742 Demo St,20/20 Mobile Corp,1000000,"Jamie, Brooks",jamie.brooks@example.com,Required,What's Your Plan?,Complete
+SAMPLE003,20/20 Mobile 742 Demo St,20/20 Mobile Corp,1000000,"Jamie, Brooks",jamie.brooks@example.com,Required,Welcome to Starlink,Complete

@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Store Training Tracker</title>
+<!-- SheetJS reads .xlsx / .csv files entirely in the browser. Nothing is uploaded anywhere. -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:var(--color-bg,#f5f6f8); --panel:var(--color-bg-secondary,#ffffff); --text:var(--color-text,#1b1f24);
+  --muted:var(--color-text-secondary,#5f6b7a); --faint:var(--color-text-tertiary,#8a94a3);
+  --border:var(--color-border,#e1e4ea); --hover:var(--color-bg-hover,#eef1f5);
+  --accent:var(--color-primary,#2563eb); --on-accent:var(--color-text-on-primary,#ffffff);
+  --ok:var(--color-success,#16a34a); --okbg:var(--color-success-bg,#e7f6ec); --oktext:var(--color-success-text,#166534);
+  --bad:var(--color-error,#dc2626); --badbg:var(--color-error-bg,#fdecec); --badtext:var(--color-error-text,#991b1b);
+  --radius:10px; --font:var(--font-sans,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif);
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:var(--color-bg,#111418); --panel:var(--color-bg-secondary,#1a1e24); --text:var(--color-text,#e8eaed);
+    --muted:var(--color-text-secondary,#a3adba); --faint:var(--color-text-tertiary,#7c8796);
+    --border:var(--color-border,#2b313a); --hover:var(--color-bg-hover,#232933);
+    --okbg:var(--color-success-bg,#12301f); --oktext:var(--color-success-text,#86efac);
+    --badbg:var(--color-error-bg,#3a1717); --badtext:var(--color-error-text,#fca5a5);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:14px/1.45 var(--font)}
+button,input,select{font:inherit;color:inherit}
+.muted{color:var(--muted)} .small{font-size:12px}
+.good{color:var(--ok);font-weight:600} .bad{color:var(--bad);font-weight:600}
+
+/* Header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:14px 20px;background:var(--panel);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5}
+.top h1{font-size:18px;margin:0}
+.brand{display:flex;flex-direction:column}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:8px;border:1px solid var(--border);
+  background:var(--panel);cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--hover)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.check{display:inline-flex;gap:6px;align-items:center;font-size:12px;color:var(--muted);cursor:pointer}
+
+main{padding:16px 20px 40px;max-width:1500px;margin:0 auto}
+.error{background:var(--badbg);color:var(--badtext);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px}
+
+/* Empty state */
+.dropzone{border:2px dashed var(--border);border-radius:14px;background:var(--panel);padding:60px 24px;text-align:center;margin-top:24px}
+.dropzone.drag, body.drag .dropzone{border-color:var(--accent);background:var(--hover)}
+.dropzone h2{margin:0 0 6px;font-size:20px}
+.dropzone p{margin:6px 0}
+.dropzone .btn{margin-top:14px}
+
+/* Filters */
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--panel);border:1px solid var(--border);
+  border-radius:var(--radius);padding:10px 12px;margin-bottom:12px}
+.filters input[type=search],.filters select{padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg)}
+.filters input[type=search]{min-width:220px;flex:1 1 220px}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:7px 11px;cursor:pointer;border-right:1px solid var(--border)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--accent);color:var(--on-accent)}
+.reset{border:0;background:none;color:var(--accent);cursor:pointer;padding:6px}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px}
+.kpi .v{font-size:22px;font-weight:700}
+.kpi .l{font-size:12px;color:var(--muted)}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:320px minmax(0,1fr);gap:12px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius)}
+.stores{position:sticky;top:76px;max-height:calc(100vh - 92px);display:flex;flex-direction:column}
+.list-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border)}
+.list-head select{padding:4px 6px;border:1px solid var(--border);border-radius:6px;background:var(--bg);font-size:12px}
+#storeList{overflow:auto;padding:6px}
+.store{display:grid;grid-template-columns:1fr auto;gap:2px 8px;width:100%;text-align:left;background:none;border:1px solid transparent;
+  border-radius:8px;padding:8px 10px;cursor:pointer}
+.store:hover{background:var(--hover)}
+.store.active{border-color:var(--accent);background:var(--hover)}
+.store .addr{font-weight:600}
+.store .pct{grid-row:1;grid-column:2;font-weight:600;font-size:13px}
+.store .meta{grid-column:1/3;font-size:12px;color:var(--muted)}
+.store .bar{grid-column:1/3}
+.bar{height:6px;border-radius:4px;background:var(--badbg);overflow:hidden}
+.bar span{display:block;height:100%;background:var(--ok)}
+.none{padding:20px;text-align:center;color:var(--muted)}
+
+/* Detail */
+.detail{padding:16px;min-width:0}
+.detail h2{margin:0;font-size:18px}
+.detail h3{font-size:14px;margin:22px 0 8px}
+.dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.mini{display:flex;gap:18px;flex-wrap:wrap;margin:12px 0}
+.mini div b{display:block;font-size:18px}
+.mini div span{font-size:12px;color:var(--muted)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.note{font-size:12px;color:var(--muted)}
+
+table{border-collapse:collapse;width:100%}
+.tbl th,.tbl td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle}
+.tbl th{font-size:12px;color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--panel)}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover{background:var(--hover)}
+.num{text-align:right!important;font-variant-numeric:tabular-nums;white-space:nowrap}
+.barcell{display:flex;align-items:center;gap:8px;min-width:140px}
+.barcell .bar{flex:1}
+.barcell b{width:40px;text-align:right;font-size:13px}
+
+.matrix-wrap{overflow:auto;border:1px solid var(--border);border-radius:8px;max-height:70vh}
+.matrix th,.matrix td{border-bottom:1px solid var(--border);border-right:1px solid var(--border);padding:6px 8px}
+.matrix thead th{position:sticky;top:0;background:var(--panel);z-index:2;font-size:11px;font-weight:600;color:var(--muted);
+  vertical-align:bottom;min-width:86px;max-width:110px;white-space:normal;line-height:1.25}
+.matrix .adv{position:sticky;left:0;background:var(--panel);z-index:1;min-width:200px;max-width:260px}
+.matrix thead .adv{z-index:3;text-align:left}
+.matrix .email{font-size:11px;color:var(--muted);word-break:break-all}
+.cell{text-align:center;font-weight:700;font-size:15px}
+.cell.ok{background:var(--okbg);color:var(--oktext)}
+.cell.no{background:var(--badbg);color:var(--badtext)}
+.cell.na{color:var(--faint);font-weight:400}
+.matrix tfoot td{font-size:11px;color:var(--muted);text-align:center;background:var(--panel);position:sticky;bottom:0}
+.matrix tfoot .adv{text-align:left}
+
+.gaps{display:grid;grid-template-columns:minmax(160px,260px) 1fr auto;gap:6px 12px;align-items:center}
+.gaps .g{height:10px;border-radius:5px;background:var(--bad);min-width:2px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);
+  padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .stores{position:static;max-height:45vh}
+  .filters input[type=search]{min-width:0}
+}
+</style>
+<!--PRELOAD-->
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <h1>Store Training Tracker</h1>
+    <span id="fileInfo" class="muted small">No file loaded</span>
+  </div>
+  <div class="actions">
+    <label class="check" title="Keeps the last file in this browser only, so you don't have to load it again"><input type="checkbox" id="remember"> Remember on this device</label>
+    <label class="btn primary" for="fileInput">Load export</label>
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" hidden>
+    <button class="btn" id="exportBtn" disabled title="Download the rows that match your current filters">Export CSV</button>
+    <button class="btn" id="clearBtn" hidden>Clear</button>
+  </div>
+</header>
+
+<main>
+  <div id="error" class="error" hidden></div>
+
+  <section id="empty" class="dropzone">
+    <h2>Drop your Advocate Report export here</h2>
+    <p class="muted">.xlsx or .csv. Needs these columns: <b>Door Name</b>, <b>Advocate Name</b>, <b>Training</b> and <b>Status</b>.</p>
+    <p class="muted small">The file is read in your browser and never uploaded. It is not saved to GitHub.</p>
+    <label class="btn primary" for="fileInput">Choose file</label>
+  </section>
+
+  <section id="app" hidden>
+    <div class="filters">
+      <input type="search" id="storeSearch" placeholder="Search store address, door name or SFID…" aria-label="Search stores">
+      <input type="search" id="advSearch" placeholder="Search advocate name or email…" aria-label="Search advocates">
+      <select id="dealerSel" aria-label="Dealer" hidden></select>
+      <select id="trainingSel" aria-label="Training"></select>
+      <div class="seg" id="statusSeg" role="group" aria-label="Advocate status">
+        <button data-f="all" class="on">All</button>
+        <button data-f="incomplete">Has incomplete</button>
+        <button data-f="complete">Fully complete</button>
+      </div>
+      <button class="reset" id="resetBtn">Reset filters</button>
+    </div>
+
+    <div class="kpis" id="kpis"></div>
+
+    <div class="layout">
+      <aside class="panel stores">
+        <div class="list-head">
+          <span id="storeCount" class="muted small"></span>
+          <select id="sort" aria-label="Sort stores">
+            <option value="address">Sort: Address</option>
+            <option value="incomplete">Sort: Most incomplete</option>
+            <option value="pct">Sort: Lowest completion</option>
+            <option value="advocates">Sort: Most advocates</option>
+          </select>
+        </div>
+        <div id="storeList"></div>
+      </aside>
+      <section class="panel detail" id="detail"></section>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // Header names the app recognises (lower-case). Add aliases here if your export changes.
+  var HEADERS = {
+    sfid: ['sfid', 'store id', 'salesforce id'],
+    store: ['door name', 'store', 'store name', 'store address', 'location'],
+    dealer: ['dealer name', 'dealer'],
+    advocate: ['advocate name', 'advocate', 'employee name', 'employee'],
+    email: ['email address', 'email', 'e-mail'],
+    training: ['training', 'training name', 'course'],
+    status: ['status', 'completion status']
+  };
+  var REQUIRED = ['store', 'advocate', 'training', 'status'];
+  var STORE_KEY = 'store-training-tracker:v1';
+
+  var S = { db: null, aoa: null, meta: {}, q: '', adv: '', dealer: '', training: '', filt: 'all', sort: 'address', sel: null };
+
+  // ---------- Parsing ----------
+  function norm(h) { return String(h == null ? '' : h).trim().toLowerCase().replace(/\s+/g, ' '); }
+
+  function findHeader(aoa) {
+    for (var r = 0; r < Math.min(15, aoa.length); r++) {
+      var row = (aoa[r] || []).map(norm), map = {};
+      Object.keys(HEADERS).forEach(function (k) {
+        var i = row.findIndex(function (h) { return HEADERS[k].indexOf(h) >= 0; });
+        if (i >= 0) map[k] = i;
+      });
+      if (REQUIRED.every(function (k) { return k in map; })) return { r: r, map: map };
+    }
+    return null;
+  }
+
+  // "20/20 Mobile Inc 1002 E Amarillo" -> "1002 E Amarillo"
+  function toAddress(door) {
+    var s = String(door).trim();
+    if (s.indexOf(' - ') >= 0) s = s.split(' - ').pop();
+    var toks = s.split(/\s+/);
+    var i = toks.findIndex(function (t) { return /^\d+[A-Za-z]?$/.test(t); });
+    if (i > 0) s = toks.slice(i).join(' ');
+    return s.replace(/[,\s]+$/, '') || String(door).trim();
+  }
+
+  function build(aoa) {
+    var h = findHeader(aoa);
+    if (!h) throw new Error('Could not find the columns Door Name, Advocate Name, Training and Status in this file.');
+    var map = h.map;
+    function get(row, k) { return k in map ? String(row[map[k]] == null ? '' : row[map[k]]).trim() : ''; }
+    var stores = new Map(), tcount = new Map(), dealers = new Set(), rows = 0;
+    for (var i = h.r + 1; i < aoa.length; i++) {
+      var row = aoa[i];
+      if (!row || !row.length) continue;
+      var door = get(row, 'store'), adv = get(row, 'advocate'), tr = get(row, 'training');
+      if (!door || !adv || !tr) continue;
+      var done = /^complete/i.test(get(row, 'status'));
+      var email = get(row, 'email'), dealer = get(row, 'dealer');
+      if (dealer) dealers.add(dealer);
+      var s = stores.get(door);
+      if (!s) {
+        s = { key: door, door: door, address: toAddress(door), sfid: get(row, 'sfid'), dealer: dealer, advs: new Map() };
+        stores.set(door, s);
+      }
+      var ak = (email || adv).toLowerCase();
+      var a = s.advs.get(ak);
+      if (!a) { a = { name: adv, email: email, t: new Map() }; s.advs.set(ak, a); }
+      a.t.set(tr, a.t.get(tr) === true || done);
+      tcount.set(tr, (tcount.get(tr) || 0) + 1);
+      rows++;
+    }
+    if (!rows) throw new Error('No data rows were found under the header row.');
+    var trainings = Array.from(tcount.keys());
+    trainings.sort(function (x, y) { return tcount.get(y) - tcount.get(x); });
+    var list = Array.from(stores.values());
+    return { stores: list, byKey: stores, trainings: trainings, dealers: Array.from(dealers).sort(), rows: rows };
+  }
+
+  function load(aoa, meta, fromStorage) {
+    try {
+      S.db = build(aoa);
+    } catch (e) { showError(e.message); return; }
+    S.aoa = aoa; S.meta = meta || {}; S.sel = null;
+    hideError();
+    setupControls();
+    if (!fromStorage && $('#remember').checked) persist();
+    render();
+  }
+
+  function readFile(file) {
+    if (!file) return;
+    if (typeof XLSX === 'undefined') {
+      showError('The spreadsheet reader could not load. Check your internet connection and reload the page.');
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var wb = XLSX.read(new Uint8Array(reader.result), { type: 'array' });
+        for (var n = 0; n < wb.SheetNames.length; n++) {
+          var aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[n]], { header: 1, defval: '', raw: false });
+          if (findHeader(aoa)) {
+            load(aoa, { fileName: file.name, sheet: wb.SheetNames[n], loadedAt: new Date().toISOString() });
+            return;
+          }
+        }
+        showError('Could not find the columns Door Name, Advocate Name, Training and Status in any sheet of "' + file.name + '".');
+      } catch (e) { showError('Could not read "' + file.name + '": ' + e.message); }
+    };
+    reader.onerror = function () { showError('Could not read "' + file.name + '".'); };
+    reader.readAsArrayBuffer(file);
+  }
+
+  // ---------- Persistence (opt-in, this browser only) ----------
+  function storage() { try { var ls = window.localStorage; ls.getItem('x'); return ls; } catch (e) { return null; } }
+  function persist() {
+    var ls = storage(); if (!ls || !S.aoa) return;
+    try { ls.setItem(STORE_KEY, JSON.stringify({ aoa: S.aoa, meta: S.meta })); }
+    catch (e) { toast('Could not save in this browser (file too large).'); }
+  }
+  function forget() { var ls = storage(); if (ls) try { ls.removeItem(STORE_KEY); } catch (e) {} }
+
+  // ---------- Filtering & stats ----------
+  function curTrainings() { return S.training ? [S.training] : S.db.trainings; }
+  function advMatches(a) {
+    if (!S.adv) return true;
+    return a.name.toLowerCase().indexOf(S.adv) >= 0 || a.email.toLowerCase().indexOf(S.adv) >= 0;
+  }
+  function advStats(a, trs) {
+    var n = 0, c = 0;
+    for (var i = 0; i < trs.length; i++) if (a.t.has(trs[i])) { n++; if (a.t.get(trs[i])) c++; }
+    return { n: n, c: c, i: n - c };
+  }
+  function storeMatches(s) {
+    if (S.dealer && s.dealer !== S.dealer) return false;
+    if (!S.q) return true;
+    return (s.address + ' ' + s.door + ' ' + s.sfid).toLowerCase().indexOf(S.q) >= 0;
+  }
+  function storeView(s, trs) {
+    var all = [], n = 0, c = 0, gaps = 0;
+    s.advs.forEach(function (a) {
+      if (!advMatches(a)) return;
+      var st = advStats(a, trs);
+      if (!st.n) return;
+      all.push(a); n += st.n; c += st.c; if (st.i) gaps++;
+    });
+    var shown = all.filter(function (a) {
+      var st = advStats(a, trs);
+      return S.filt === 'incomplete' ? st.i > 0 : S.filt === 'complete' ? st.i === 0 : true;
+    });
+    return { s: s, all: all, shown: shown, n: n, c: c, i: n - c, gaps: gaps, pct: n ? c / n : 0 };
+  }
+  function visibleViews(trs) {
+    var out = S.db.stores.filter(storeMatches).map(function (s) { return storeView(s, trs); })
+      .filter(function (v) { return v.shown.length > 0; });
+    var by = {
+      address: function (a, b) { return a.s.address.localeCompare(b.s.address, undefined, { numeric: true }); },
+      incomplete: function (a, b) { return b.i - a.i || a.pct - b.pct; },
+      pct: function (a, b) { return a.pct - b.pct || b.i - a.i; },
+      advocates: function (a, b) { return b.all.length - a.all.length; }
+    }[S.sort];
+    return out.sort(by);
+  }
+  function fmtPct(p) { return (p >= 1 ? 100 : Math.min(99, Math.round(p * 100))) + '%'; }
+  function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
+
+  // ---------- Rendering ----------
+  function setupControls() {
+    var ts = $('#trainingSel');
+    ts.innerHTML = '<option value="">All trainings (' + S.db.trainings.length + ')</option>' +
+      S.db.trainings.map(function (t) { return '<option>' + esc(t) + '</option>'; }).join('');
+    var ds = $('#dealerSel');
+    ds.hidden = S.db.dealers.length < 2;
+    ds.innerHTML = '<option value="">All dealers</option>' + S.db.dealers.map(function (d) { return '<option>' + esc(d) + '</option>'; }).join('');
+    resetFilters(true);
+  }
+
+  function render() {
+    var has = !!S.db;
+    $('#empty').hidden = has; $('#app').hidden = !has;
+    $('#exportBtn').disabled = !has; $('#clearBtn').hidden = !has;
+    if (!has) { $('#fileInfo').textContent = 'No file loaded'; return; }
+    var info = S.meta.fileName || 'Loaded data';
+    if (S.meta.loadedAt) info += ' · loaded ' + new Date(S.meta.loadedAt).toLocaleString();
+    $('#fileInfo').textContent = info + ' · ' + S.db.rows.toLocaleString() + ' rows';
+
+    var trs = curTrainings(), views = visibleViews(trs);
+    renderKpis(views);
+    renderList(views);
+    var sel = S.sel && S.db.byKey.get(S.sel);
+    if (sel) renderStore(storeView(sel, trs), trs); else renderOverview(views, trs);
+  }
+
+  function renderKpis(views) {
+    var adv = 0, n = 0, c = 0, gaps = 0;
+    views.forEach(function (v) { adv += v.all.length; n += v.n; c += v.c; gaps += v.gaps; });
+    var k = [
+      [views.length.toLocaleString(), 'Stores shown'],
+      [adv.toLocaleString(), 'Advocates'],
+      [n ? fmtPct(c / n) : '–', 'Trainings complete'],
+      [(n - c).toLocaleString(), 'Incomplete trainings'],
+      [gaps.toLocaleString(), 'Advocates with gaps']
+    ];
+    $('#kpis').innerHTML = k.map(function (x) { return '<div class="kpi"><div class="v">' + x[0] + '</div><div class="l">' + x[1] + '</div></div>'; }).join('');
+  }
+
+  function renderList(views) {
+    $('#storeCount').textContent = views.length + ' of ' + S.db.stores.length + ' stores';
+    $('#storeList').innerHTML = views.length ? views.map(function (v) {
+      return '<button class="store' + (S.sel === v.s.key ? ' active' : '') + '" data-key="' + esc(v.s.key) + '">' +
+        '<div class="addr">' + esc(v.s.address) + '</div><div class="pct">' + fmtPct(v.pct) + '</div>' +
+        '<div class="meta">' + plural(v.all.length, 'advocate') + ' · ' +
+        (v.i ? '<span class="bad">' + v.i + ' incomplete</span>' : '<span class="good">All complete</span>') + '</div>' +
+        '<div class="bar"><span style="width:' + (v.pct * 100).toFixed(1) + '%"></span></div></button>';
+    }).join('') : '<div class="none">No stores match these filters.</div>';
+  }
+
+  function barCell(p) {
+    return '<div class="barcell"><div class="bar"><span style="width:' + (p * 100).toFixed(1) + '%"></span></div><b>' + fmtPct(p) + '</b></div>';
+  }
+
+  function renderOverview(views, trs) {
+    var html = '<div class="dhead"><div><h2>All stores</h2><div class="muted small">Pick a store on the left (or a row below) to see each advocate\'s trainings.</div></div></div>';
+    if (!views.length) { $('#detail').innerHTML = html + '<div class="none">No stores match these filters.</div>'; return; }
+
+    // Where the gaps are, by training
+    var gapsBy = trs.map(function (t) {
+      var n = 0, inc = 0;
+      views.forEach(function (v) { v.all.forEach(function (a) { if (a.t.has(t)) { n++; if (!a.t.get(t)) inc++; } }); });
+      return { t: t, n: n, inc: inc };
+    }).filter(function (g) { return g.inc > 0; }).sort(function (a, b) { return b.inc - a.inc; });
+    if (gapsBy.length) {
+      var max = gapsBy[0].inc;
+      html += '<h3>Incomplete by training</h3><div class="gaps">' + gapsBy.map(function (g) {
+        return '<div>' + esc(g.t) + '</div><div><div class="g" style="width:' + (g.inc / max * 100).toFixed(1) + '%"></div></div>' +
+          '<div class="num small">' + g.inc + ' of ' + g.n + '</div>';
+      }).join('') + '</div>';
+    } else {
+      html += '<h3>Incomplete by training</h3><div class="note">Nothing incomplete for the current filters.</div>';
+    }
+
+    html += '<h3>Stores</h3><div style="overflow:auto"><table class="tbl"><thead><tr><th>Store address</th><th class="num">Advocates</th>' +
+      '<th class="num">With gaps</th><th class="num">Incomplete</th><th>Completion</th></tr></thead><tbody>' +
+      views.map(function (v) {
+        return '<tr data-key="' + esc(v.s.key) + '"><td><div><b>' + esc(v.s.address) + '</b></div><div class="muted small">' + esc(v.s.door) + '</div></td>' +
+          '<td class="num">' + v.all.length + '</td><td class="num">' + v.gaps + '</td>' +
+          '<td class="num">' + (v.i ? '<span class="bad">' + v.i + '</span>' : '0') + '</td><td>' + barCell(v.pct) + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+    $('#detail').innerHTML = html;
+  }
+
+  function renderStore(v, trs) {
+    var s = v.s;
+    var cols = trs.filter(function (t) { return v.all.some(function (a) { return a.t.has(t); }); });
+    var rows = v.shown.slice().sort(function (a, b) {
+      return advStats(b, cols).i - advStats(a, cols).i || a.name.localeCompare(b.name);
+    });
+    var withGaps = v.all.filter(function (a) { return advStats(a, cols).i > 0; });
+    var sub = [s.door !== s.address ? s.door : '', s.sfid ? 'SFID ' + s.sfid : '', s.dealer].filter(Boolean).map(esc).join(' · ');
+
+    var html = '<div class="dhead"><div><h2>' + esc(s.address) + '</h2><div class="muted small">' + sub + '</div></div>' +
+      '<button class="btn" id="backBtn">← All stores</button></div>' +
+      '<div class="mini">' +
+      '<div><b>' + v.all.length + '</b><span>Advocates</span></div>' +
+      '<div><b>' + fmtPct(v.pct) + '</b><span>Trainings complete</span></div>' +
+      '<div><b class="' + (v.i ? 'bad' : 'good') + '">' + v.i + '</b><span>Incomplete trainings</span></div>' +
+      '<div><b>' + (v.all.length - withGaps.length) + '</b><span>Fully complete advocates</span></div></div>';
+
+    html += '<div class="toolbar">' +
+      (withGaps.length ? '<button class="btn" id="copyEmails">Copy emails of advocates with gaps (' + withGaps.length + ')</button>' : '') +
+      '<span class="note">✓ complete · ✗ incomplete · – not assigned</span></div>';
+
+    if (!rows.length) {
+      html += '<div class="none">No advocates at this store match the current filters.</div>';
+    } else {
+      html += '<div class="matrix-wrap"><table class="matrix"><thead><tr><th class="adv">Advocate</th><th class="num">Done</th>' +
+        cols.map(function (t) { return '<th title="' + esc(t) + '">' + esc(t) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+        rows.map(function (a) {
+          var st = advStats(a, cols);
+          return '<tr><td class="adv"><div><b>' + esc(a.name) + '</b></div><div class="email">' + esc(a.email) + '</div></td>' +
+            '<td class="num ' + (st.i ? 'bad' : 'good') + '">' + st.c + '/' + st.n + '</td>' +
+            cols.map(function (t) {
+              if (!a.t.has(t)) return '<td class="cell na" title="Not assigned">–</td>';
+              return a.t.get(t) ? '<td class="cell ok" title="' + esc(t) + ': Complete">✓</td>'
+                                : '<td class="cell no" title="' + esc(t) + ': Incomplete">✗</td>';
+            }).join('') + '</tr>';
+        }).join('') + '</tbody><tfoot><tr><td class="adv">Completed</td><td></td>' +
+        cols.map(function (t) {
+          var n = 0, c = 0;
+          rows.forEach(function (a) { if (a.t.has(t)) { n++; if (a.t.get(t)) c++; } });
+          return '<td>' + c + '/' + n + '</td>';
+        }).join('') + '</tr></tfoot></table></div>';
+    }
+    $('#detail').innerHTML = html;
+  }
+
+  // ---------- Actions ----------
+  function exportCsv() {
+    var trs = curTrainings();
+    var views = S.sel && S.db.byKey.get(S.sel) ? [storeView(S.db.byKey.get(S.sel), trs)] : visibleViews(trs);
+    var out = [['Store Address', 'Door Name', 'SFID', 'Advocate Name', 'Email Address', 'Training', 'Status']];
+    views.forEach(function (v) {
+      v.shown.forEach(function (a) {
+        trs.forEach(function (t) {
+          if (!a.t.has(t)) return;
+          var d = a.t.get(t);
+          if (S.filt === 'incomplete' && d) return;
+          out.push([v.s.address, v.s.door, v.s.sfid, a.name, a.email, t, d ? 'Complete' : 'Incomplete']);
+        });
+      });
+    });
+    var csv = out.map(function (r) { return r.map(function (x) { x = String(x); return /[",\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; }).join(','); }).join('\r\n');
+    var blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    var label = S.sel ? S.db.byKey.get(S.sel).address.replace(/[^\w]+/g, '_') : 'stores';
+    a.href = URL.createObjectURL(blob);
+    a.download = 'training_' + label + (S.filt === 'incomplete' ? '_incomplete' : '') + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    toast('Exported ' + (out.length - 1).toLocaleString() + ' rows');
+  }
+
+  function copyText(text, msg) {
+    function fallback() {
+      var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); toast(msg); } catch (e) { toast('Copy failed'); }
+      ta.remove();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { toast(msg); }, fallback);
+    else fallback();
+  }
+
+  var toastTimer;
+  function toast(msg) {
+    var t = $('#toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2200);
+  }
+  function showError(m) { var e = $('#error'); e.textContent = m; e.hidden = false; }
+  function hideError() { $('#error').hidden = true; }
+
+  function resetFilters(silent) {
+    S.q = S.adv = S.dealer = S.training = ''; S.filt = 'all';
+    $('#storeSearch').value = ''; $('#advSearch').value = ''; $('#trainingSel').value = ''; $('#dealerSel').value = '';
+    document.querySelectorAll('#statusSeg button').forEach(function (b) { b.classList.toggle('on', b.dataset.f === 'all'); });
+    if (!silent) render();
+  }
+
+  // ---------- Wiring ----------
+  $('#fileInput').addEventListener('change', function (e) { readFile(e.target.files[0]); e.target.value = ''; });
+  $('#storeSearch').addEventListener('input', function (e) { S.q = e.target.value.trim().toLowerCase(); render(); });
+  $('#advSearch').addEventListener('input', function (e) { S.adv = e.target.value.trim().toLowerCase(); render(); });
+  $('#trainingSel').addEventListener('change', function (e) { S.training = e.target.value; render(); });
+  $('#dealerSel').addEventListener('change', function (e) { S.dealer = e.target.value; render(); });
+  $('#sort').addEventListener('change', function (e) { S.sort = e.target.value; render(); });
+  $('#resetBtn').addEventListener('click', function () { resetFilters(false); });
+  $('#statusSeg').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    S.filt = b.dataset.f;
+    document.querySelectorAll('#statusSeg button').forEach(function (x) { x.classList.toggle('on', x === b); });
+    render();
+  });
+  $('#storeList').addEventListener('click', function (e) {
+    var b = e.target.closest('.store'); if (!b) return;
+    S.sel = b.dataset.key; render();
+    if (window.innerWidth <= 900) $('#detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  $('#detail').addEventListener('click', function (e) {
+    if (e.target.closest('#backBtn')) { S.sel = null; render(); return; }
+    if (e.target.closest('#copyEmails')) {
+      var v = storeView(S.db.byKey.get(S.sel), curTrainings());
+      var emails = v.all.filter(function (a) { return advStats(a, curTrainings()).i > 0 && a.email; }).map(function (a) { return a.email; });
+      copyText(emails.join('; '), 'Copied ' + plural(emails.length, 'email'));
+      return;
+    }
+    var tr = e.target.closest('tr[data-key]');
+    if (tr) { S.sel = tr.dataset.key; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  });
+  $('#exportBtn').addEventListener('click', exportCsv);
+  $('#clearBtn').addEventListener('click', function () {
+    S.db = null; S.aoa = null; S.meta = {}; S.sel = null; forget(); render();
+  });
+  $('#remember').addEventListener('change', function (e) {
+    if (e.target.checked) { if (!storage()) { toast('This browser does not allow saving'); e.target.checked = false; return; } persist(); toast('Saved in this browser'); }
+    else { forget(); toast('Removed from this browser'); }
+  });
+
+  // Drag & drop anywhere on the page
+  ['dragenter', 'dragover'].forEach(function (ev) {
+    document.addEventListener(ev, function (e) { e.preventDefault(); document.body.classList.add('drag'); });
+  });
+  ['dragleave', 'drop'].forEach(function (ev) {
+    document.addEventListener(ev, function (e) { e.preventDefault(); if (ev === 'drop' || !e.relatedTarget) document.body.classList.remove('drag'); });
+  });
+  document.addEventListener('drop', function (e) { var f = e.dataTransfer && e.dataTransfer.files[0]; if (f) readFile(f); });
+
+  // ---------- Start ----------
+  if (window.PRELOADED && window.PRELOADED.aoa) {
+    load(window.PRELOADED.aoa, window.PRELOADED.meta, true);
+  } else {
+    var ls = storage(), saved = null;
+    if (ls) try { saved = JSON.parse(ls.getItem(STORE_KEY) || 'null'); } catch (e) { saved = null; }
+    if (saved && saved.aoa) { $('#remember').checked = true; load(saved.aoa, saved.meta, true); }
+    else render();
+  }
+})();
+</script>
+</body>
+</html>
